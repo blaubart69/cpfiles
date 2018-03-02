@@ -19,20 +19,24 @@ namespace cp
                     return 1;
                 }
 
+                string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
+                string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));
+
                 bool hasErrors = false;
+                ulong copiedCount = 0;
+                ulong errorCount = 0;
+                using (var cpWriter = new ConsoleAndFileWriter(@".\cpCopied.txt"))
+                using (var errorWriter = new ConsoleAndFileWriter(@".\cpError.txt"))
                 {
-                    ulong copiedCount = 0;
-                    ulong errorCount = 0;
-                    using (var cpWriter = new ConsoleAndFileWriter(@".\cpCopied.txt"))
-                    using (var errorWriter = new ConsoleAndFileWriter(@".\cpError.txt"))
+                    foreach (string relativeFilename in Misc.ReadLines(opts.FilenameWithFiles))
                     {
-                        foreach (string relativeFilename in Misc.ReadLines(opts.FilenameWithFiles))
-                        {
-                            hasErrors = CopyFiles.Run(relativeFilename, opts.SrcBase, opts.TrgBase,
-                               OnCopy:       (filename) => { cpWriter.WriteLine(filename); copiedCount += 1; },
-                               OnWin32Error: (LastErrorCode, Api, Message) => { errorWriter.WriteLine($"{LastErrorCode}\t{Api}\t{Message}"); errorCount += 1; },
-                               dryrun:       opts.dryrun);
-                        }
+                        hasErrors = CopyFiles.Run(relativeFilename, FullSrcDir, FullTrgDir,
+                            OnCopy:       (filename) => { cpWriter.WriteLine(filename); copiedCount += 1; },
+                            OnWin32Error: (LastErrorCode, Api, Message) => { errorWriter.WriteLine($"{LastErrorCode}\t{Api}\t{Message}"); errorCount += 1; },
+                            dryrun:       opts.dryrun);
+                    }
+                    if (!opts.dryrun)
+                    {
                         Console.Error.WriteLine($"copied: {copiedCount}, errors: {errorCount}");
                     }
                 }

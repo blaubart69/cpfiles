@@ -18,12 +18,9 @@ namespace cp
             string FullSrc = Path.Combine(srcDir, relativeFilename);
             string FullTrg = Path.Combine(trgDir, relativeFilename);
 
-            FullSrc = Spi.Misc.GetLongFilenameNotation(FullSrc);
-            FullTrg = Spi.Misc.GetLongFilenameNotation(FullTrg);
-
             if (dryrun)
             {
-                Console.Out.WriteLine($"{FullSrc}<<>>{FullTrg}");
+                Console.Out.WriteLine($"[{FullSrc}]<<>>[{FullTrg}]");
                 return true;
             }
 

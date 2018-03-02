@@ -41,6 +41,7 @@ namespace cp
                 }
                 else
                 {
+                    resultOpts = tmpOpts;
                     resultOpts.SrcBase = parsedArgs[0];
                     resultOpts.TrgBase = parsedArgs[1];
                     resultOpts.FilenameWithFiles = parsedArgs[2];
