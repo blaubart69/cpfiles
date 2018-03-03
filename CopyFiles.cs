@@ -51,7 +51,7 @@ namespace cp
                 OnWin32Error?.Invoke(Marshal.GetLastWin32Error(), "CopyFileW", $"\"{FullSrc}\" \"{FullTrg}\"");
             }
 
-            return false;
+            return ok;
         }
     }
 }
