@@ -25,13 +25,13 @@ namespace cp
                 bool hasErrors = false;
                 ulong copiedCount = 0;
                 ulong errorCount = 0;
-                using (var cpWriter = new ConsoleAndFileWriter(@".\cpCopied.txt"))
-                using (var errorWriter = new ConsoleAndFileWriter(@".\cpError.txt"))
+                using (TextWriter cpWriter = new StreamWriter(@".\cpCopied.txt", append: false, encoding: System.Text.Encoding.UTF8))
+                using (TextWriter errorWriter = new StreamWriter(@".\cpError.txt", append:false, encoding: System.Text.Encoding.UTF8))
                 {
                     foreach (string relativeFilename in Misc.ReadLines(opts.FilenameWithFiles))
                     {
                         hasErrors = CopyFiles.Run(relativeFilename, FullSrcDir, FullTrgDir,
-                            OnCopy:       (filename) => { cpWriter.WriteLine(filename); copiedCount += 1; },
+                            OnCopy:       (filename)                    => { cpWriter.WriteLine(filename); copiedCount += 1; },
                             OnWin32Error: (LastErrorCode, Api, Message) => { errorWriter.WriteLine($"{LastErrorCode}\t{Api}\t{Message}"); errorCount += 1; },
                             dryrun:       opts.dryrun);
                     }

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace cp
+namespace Spi
 {
+    
     [Flags]
     public enum FileAttributes : uint
     {
@@ -34,12 +35,19 @@ namespace cp
     }
     public class Native
     {
+        public delegate void Win32ApiErrorCallback(int LastError, string Apiname, string Text);
+
+        public enum Win32Error : int
+        {
+            ERROR_PATH_NOT_FOUND = 3
+        }
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteFileW([MarshalAs(UnmanagedType.LPWStr)]string lpFileName);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern uint GetFileAttributes(string lpFileName);
+        public static extern uint GetFileAttributesW(string lpFileName);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern bool SetFileAttributes(string lpFileName, [MarshalAs(UnmanagedType.U4)] FileAttributes dwFileAttributes);
@@ -50,5 +58,9 @@ namespace cp
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CopyFileW")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CopyFile(string lpExistingFileName, string lpNewFileName, bool bFailIfExists);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool CreateDirectoryW(string lpPathName, IntPtr lpSecurityAttributes);
     }
 }
