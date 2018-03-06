@@ -39,7 +39,8 @@ namespace Spi
 
         public enum Win32Error : int
         {
-            ERROR_PATH_NOT_FOUND = 3
+            ERROR_PATH_NOT_FOUND = 3,
+            ERROR_ACCESS_DENIED = 5
         }
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -49,8 +50,10 @@ namespace Spi
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern uint GetFileAttributesW(string lpFileName);
 
+        
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern bool SetFileAttributes(string lpFileName, [MarshalAs(UnmanagedType.U4)] FileAttributes dwFileAttributes);
+        
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern bool SetFileAttributes(string lpFileName, uint dwFileAttributes);

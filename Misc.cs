@@ -4,7 +4,7 @@ using System;
 
 namespace Spi
 {
-    class Misc
+    public class Misc
     {
         public static IEnumerable<string> ReadLines(string FilenameWithFiles)
         {
@@ -85,6 +85,18 @@ namespace Spi
             */
             //return (rc & 0x10) != 0;
             return (rc & (uint)Spi.FileAttributes.Directory) != 0;
+        }
+        public static string GetDirectoryName(string filename)
+        {
+            int lastIdxBackslash = filename.LastIndexOf('\\');
+            if (lastIdxBackslash > 0)
+            {
+                return filename.Substring(0, lastIdxBackslash);
+            }
+            else
+            {
+                return filename;
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace cp
 {
-    class CopyFiles
+    class CopyFile
     {
         public static bool Run(string relativeFilename, string srcDir, string trgDir, Action<string> OnCopy, Spi.Native.Win32ApiErrorCallback OnWin32Error, bool dryrun)
         {
@@ -29,18 +29,27 @@ namespace cp
             int LastError = Marshal.GetLastWin32Error();
             if ( LastError == (int)Spi.Native.Win32Error.ERROR_PATH_NOT_FOUND )
             {
-                string FullTargetDirectoryname = System.IO.Path.GetDirectoryName(FullTrg);
+                //string FullTargetDirectoryname = System.IO.Path.GetDirectoryName(FullTrg);
+                string FullTargetDirectoryname = Spi.Misc.GetDirectoryName(FullTrg);
                 if ( ! Spi.Misc.CreatePath(FullTargetDirectoryname, OnWin32Error))
                 {
                     OnWin32Error?.Invoke(Marshal.GetLastWin32Error(), "CreateDirectoryW", FullTargetDirectoryname);
                     return false;
                 }
-
-                if (Spi.Native.CopyFile(lpExistingFileName: FullSrc, lpNewFileName: FullTrg, bFailIfExists: false))
+            }
+            else if ( LastError == (int)Spi.Native.Win32Error.ERROR_ACCESS_DENIED )
+            {
+                if ( ! Spi.Native.SetFileAttributes(FullTrg, Spi.FileAttributes.Normal))
                 {
-                    OnCopy?.Invoke(relativeFilename);
-                    ok = true;
+                    OnWin32Error?.Invoke(Marshal.GetLastWin32Error(), "SetFileAttributesW", FullTrg);
+                    return false;
                 }
+            }
+
+            if (Spi.Native.CopyFile(lpExistingFileName: FullSrc, lpNewFileName: FullTrg, bFailIfExists: false))
+            {
+                OnCopy?.Invoke(relativeFilename);
+                ok = true;
             }
 
             if ( !ok )

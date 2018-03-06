@@ -30,14 +30,15 @@ namespace cp
                 {
                     foreach (string relativeFilename in Misc.ReadLines(opts.FilenameWithFiles))
                     {
-                        hasErrors = CopyFiles.Run(relativeFilename, FullSrcDir, FullTrgDir,
+                        hasErrors = CopyFile.Run(relativeFilename, FullSrcDir, FullTrgDir,
                             OnCopy:       (filename)                    => { cpWriter.WriteLine(filename); copiedCount += 1; },
                             OnWin32Error: (LastErrorCode, Api, Message) => { errorWriter.WriteLine($"{LastErrorCode}\t{Api}\t{Message}"); errorCount += 1; },
                             dryrun:       opts.dryrun);
-                    }
-                    if (!opts.dryrun)
-                    {
-                        Console.Error.WriteLine($"copied: {copiedCount}, errors: {errorCount}");
+
+                        if (!opts.dryrun)
+                        {
+                            Console.Error.WriteLine($"copied: {copiedCount}, errors: {errorCount}");
+                        }
                     }
                 }
 
