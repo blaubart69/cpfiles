@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Collections.Generic;
 using System;
+using System.Runtime.InteropServices;
 
 namespace Spi
 {
@@ -34,7 +35,7 @@ namespace Spi
             }
             return Filename;
         }
-        public static bool CreatePath(string PathToCreate, Spi.Native.Win32ApiErrorCallback OnWin32Error)
+        public static bool CreatePath(string PathToCreate, Native.Win32ApiErrorCallback OnWin32Error)
         {
             if (IsDirectory(PathToCreate))
             {
@@ -46,7 +47,7 @@ namespace Spi
             }
 
             bool ok = false;
-            if (System.Runtime.InteropServices.Marshal.GetLastWin32Error() == (int)Native.Win32Error.ERROR_PATH_NOT_FOUND)
+            if (Marshal.GetLastWin32Error() == (int)Native.Win32Error.ERROR_PATH_NOT_FOUND)
             {
                 // not found. try to create the parent dir.
                 int LastPos = PathToCreate.LastIndexOf(System.IO.Path.DirectorySeparatorChar);
@@ -56,16 +57,27 @@ namespace Spi
                     {
                         // parent dir exist/was created
                         ok = Spi.Native.CreateDirectoryW(PathToCreate, IntPtr.Zero);
-                        if ( !ok)
+                        if ( !ok )
                         {
-                            OnWin32Error?.Invoke(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "CreateDirectoryW", PathToCreate);
+                            if (Marshal.GetLastWin32Error() == 183) // ERROR_ALREADY_EXISTS
+                            {
+                                ok = true;
+                            }
+                            else
+                            {
+                                OnWin32Error?.Invoke(Marshal.GetLastWin32Error(), "CreateDirectoryW", PathToCreate);
+                            }
                         }
                     }
                 }
             }
+            else if (Marshal.GetLastWin32Error() == 183) // ERROR_ALREADY_EXISTS
+            {
+                ok = true;
+            }
             else
             {
-                OnWin32Error?.Invoke(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "CreateDirectoryW", PathToCreate);
+                OnWin32Error?.Invoke(Marshal.GetLastWin32Error(), "CreateDirectoryW", PathToCreate);
             }
             return ok;
         }

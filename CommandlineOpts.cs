@@ -11,6 +11,7 @@ namespace cp
         public string SrcBase;
         public string TrgBase;
         public bool   dryrun;
+        public int    MaxThreads = 8;
     }
     class CommandlineOpts
     {
@@ -28,8 +29,9 @@ namespace cp
             Opts tmpOpts = new Opts();
             Opts resultOpts = null;
             var p = new Mono.Options.OptionSet() {
-                { "n|dryrun",   "show what would be copied",                                           v => tmpOpts.dryrun = (v != null) },
-                { "h|help",     "show this message and exit",                                          v => show_help = v != null }            };
+                { "t=|threads",  "how many copies should be run in parallel",    v => tmpOpts.MaxThreads = Convert.ToInt32(v)  },
+                { "n|dryrun",   "show what would be copied",                    v => tmpOpts.dryrun = (v != null)             },
+                { "h|help",     "show this message and exit",                   v => show_help = v != null }                  };
 
             try
             {

@@ -8,7 +8,8 @@ namespace cp
 {
     class CopyFile
     {
-        public static bool Run(string relativeFilename, string srcDir, string trgDir, Action<string> OnCopy, Spi.Native.Win32ApiErrorCallback OnWin32Error, bool dryrun)
+        public static bool Run(string relativeFilename, string srcDir, string trgDir, Action<string> OnCopy,
+            Spi.Native.Win32ApiErrorCallback OnWin32Error, bool dryrun)
         {
             string FullSrc = Path.Combine(srcDir, relativeFilename);
             string FullTrg = Path.Combine(trgDir, relativeFilename);
@@ -19,9 +20,18 @@ namespace cp
                 return true;
             }
 
-            if ( Spi.Native.CopyFile(lpExistingFileName: FullSrc, lpNewFileName: FullTrg, bFailIfExists: false) )
+            bool ok = DoCopyFile(FullSrc, FullTrg, OnWin32Error);
+            if (ok)
             {
                 OnCopy?.Invoke(relativeFilename);
+            }
+
+            return ok;
+        }
+        public static bool DoCopyFile(string FullSrc, string FullTrg, Spi.Native.Win32ApiErrorCallback OnWin32Error)
+        {
+            if ( Spi.Native.CopyFile(lpExistingFileName: FullSrc, lpNewFileName: FullTrg, bFailIfExists: false) )
+            {
                 return true;
             }
 
@@ -48,7 +58,6 @@ namespace cp
 
             if (Spi.Native.CopyFile(lpExistingFileName: FullSrc, lpNewFileName: FullTrg, bFailIfExists: false))
             {
-                OnCopy?.Invoke(relativeFilename);
                 ok = true;
             }
 
