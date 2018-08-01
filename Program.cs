@@ -17,6 +17,8 @@ namespace cp
     {
         static int Main(string[] args)
         {
+            int rc = 99;
+
             try
             {
                 Opts opts;
@@ -28,13 +30,13 @@ namespace cp
                 string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
                 string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));
 
-                bool hasErrors = false;
                 Stats stats = new Stats();
+                Task<bool> copyFileTask = null;
 
                 using (TextWriter cpWriter    = TextWriter.Synchronized(new StreamWriter(@".\cpCopied.txt", append: false, encoding: System.Text.Encoding.UTF8)))
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
-                    Task<bool> copyFileTask = StartCopyFiles(FullSrcDir, FullTrgDir,
+                    copyFileTask = StartCopyFiles(FullSrcDir, FullTrgDir,
                         files: File.ReadLines(opts.FilenameWithFiles),
                         OnCopy: (filename) =>
                         {
@@ -49,23 +51,23 @@ namespace cp
                         MaxThreads: opts.MaxThreads,
                         dryRun: opts.dryrun);
 
-                    while (!copyFileTask.Wait(1000))
+                    while (!copyFileTask.Wait(2000))
                     {
-                        Console.Error.WriteLine($"LOOP: copied: {stats.copiedCount}, errors: {stats.errorsCount}");
+                        Console.Error.WriteLine($"copied: {stats.copiedCount}, errors: {stats.errorsCount}");
                     }
-                    Console.Error.WriteLine($"FINAL: copied: {stats.copiedCount}, errors: {stats.errorsCount}");
-
-                    hasErrors = copyFileTask.Result;
+                    Console.Error.WriteLine($"copied: {stats.copiedCount}, errors: {stats.errorsCount}");
                 }
 
-                return hasErrors ? 8 : 0;
+                rc = copyFileTask.Result ? 8 : 0;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine("Na so wirst ned ooohhooiidd... so dastehst Di boohooid...");
                 ConsoleAndFileWriter.WriteException(ex, Console.Error);
-                return 999;
+                rc = 999;
             }
+
+            return rc;
         }
         static Task<bool> StartCopyFiles(
             string FullSrc, string FullTrg, IEnumerable<string> files, 
