@@ -33,14 +33,12 @@ namespace cp
                 Stats stats = new Stats();
                 Task<bool> copyFileTask = null;
 
-                using (TextWriter cpWriter    = TextWriter.Synchronized(new StreamWriter(@".\cpCopied.txt", append: false, encoding: System.Text.Encoding.UTF8)))
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
                     copyFileTask = StartCopyFiles(FullSrcDir, FullTrgDir,
                         files: File.ReadLines(opts.FilenameWithFiles),
                         OnCopy: (filename) =>
                         {
-                            cpWriter.WriteLine(filename);
                             Interlocked.Increment(ref stats.copiedCount);
                         },
                         OnWin32Error: (LastErrorCode, Api, Message) =>
@@ -49,13 +47,9 @@ namespace cp
                             Interlocked.Increment(ref stats.errorsCount);
                         },
                         MaxThreads: opts.MaxThreads,
-                        dryRun: opts.dryrun);
+                        dryRun:     opts.dryrun);
 
-                    while (!copyFileTask.Wait(2000))
-                    {
-                        Console.Error.WriteLine($"copied: {stats.copiedCount}, errors: {stats.errorsCount}");
-                    }
-                    Console.Error.WriteLine($"copied: {stats.copiedCount}, errors: {stats.errorsCount}");
+                    WaitUntilFinished(copyFileTask, 2000, () => Console.Error.WriteLine($"copied: {stats.copiedCount}, errors: {stats.errorsCount}") );
                 }
 
                 rc = copyFileTask.Result ? 8 : 0;
@@ -69,10 +63,17 @@ namespace cp
 
             return rc;
         }
+        static void WaitUntilFinished(Task TaskToWaitFor, int milliseconds, Action ExecEvery)
+        {
+            while ( ! TaskToWaitFor.Wait(milliseconds) )
+            {
+                ExecEvery();
+            }
+            ExecEvery();
+        }
         static Task<bool> StartCopyFiles(
             string FullSrc, string FullTrg, IEnumerable<string> files, 
-            Action<string> OnCopy, 
-            Native.Win32ApiErrorCallback OnWin32Error,
+            Action<string> OnCopy, Native.Win32ApiErrorCallback OnWin32Error,
             int MaxThreads,
             bool dryRun)
         {
@@ -83,7 +84,7 @@ namespace cp
 
                     Parallel.ForEach(
                         source: files,
-                        parallelOptions: new ParallelOptions() {MaxDegreeOfParallelism = MaxThreads},
+                        parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = MaxThreads },
                         body: (relativeFilename) =>
                         {
                             if (!CopyFile.Run(relativeFilename, FullSrc, FullTrg, OnCopy, OnWin32Error, dryRun))

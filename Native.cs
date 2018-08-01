@@ -33,6 +33,7 @@ namespace Spi
         OpenNoRecall = 0x00100000,
         FirstPipeInstance = 0x00080000
     }
+    [System.Security.SuppressUnmanagedCodeSecurity]
     public class Native
     {
         public delegate void Win32ApiErrorCallback(int LastError, string Apiname, string Text);
@@ -43,6 +44,7 @@ namespace Spi
             ERROR_ACCESS_DENIED = 5
         }
 
+        
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteFileW([MarshalAs(UnmanagedType.LPWStr)]string lpFileName);
