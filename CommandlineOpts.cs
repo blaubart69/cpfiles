@@ -17,10 +17,12 @@ namespace cp
     {
         static void ShowHelp(Mono.Options.OptionSet p)
         {
-            Console.WriteLine("Usage: cp {sourceBase} {targetBase} {filename} [OPTIONS]");
-            Console.WriteLine("copies files given in a file");
-            Console.WriteLine();
-            Console.WriteLine("Options:");
+            Console.Error.WriteLine("Usage: cp [OPTIONS] {sourceBase} {targetBase} {filename}"
+            + "\ncopies files given by name in a textfile."
+            + "\nWhen the lines are Tab-separated the last column is used as filename."
+            + "\nThe filename is relative to {sourceBase} and {targetBase}");
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("Options:");
             p.WriteOptionDescriptions(Console.Error);
         }
         public static Opts GetOpts(string[] args)
@@ -29,7 +31,8 @@ namespace cp
             Opts tmpOpts = new Opts();
             Opts resultOpts = null;
             var p = new Mono.Options.OptionSet() {
-                { "t=|threads",  "how many copies should be run in parallel",    v => tmpOpts.MaxThreads = Convert.ToInt32(v)  },
+                { "t=|threads",  $"how many copies should be run in parallel (default: {tmpOpts.MaxThreads})",
+                                                                                v => tmpOpts.MaxThreads = Convert.ToInt32(v)  },
                 { "n|dryrun",   "show what would be copied",                    v => tmpOpts.dryrun = (v != null)             },
                 { "h|help",     "show this message and exit",                   v => show_help = v != null }                  };
 
@@ -38,7 +41,6 @@ namespace cp
                 List<string> parsedArgs = p.Parse(args);
                 if (parsedArgs.Count != 3)
                 {
-                    Console.Error.WriteLine("only one filename with filenames within the file");
                     show_help = true;
                 }
                 else

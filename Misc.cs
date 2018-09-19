@@ -97,5 +97,18 @@ namespace Spi
                 return filename;
             }
         }
+        public static string GetLastTsvColumn(string TsvValues)
+        {
+            int LastTab = TsvValues.LastIndexOf('\t');
+
+            if ( LastTab == -1 )
+            {
+                return TsvValues;
+            }
+            else
+            {
+                return TsvValues.Substring(LastTab + 1);
+            }
+        }
     }
 }

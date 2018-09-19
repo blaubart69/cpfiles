@@ -36,7 +36,8 @@ namespace cp
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
                     copyFileTask = StartCopyFiles(FullSrcDir, FullTrgDir,
-                        files: File.ReadLines(opts.FilenameWithFiles),
+                        files: File.ReadLines(opts.FilenameWithFiles)
+                                   .Select(line => Misc.GetLastTsvColumn(line)),
                         OnCopy: (filename) =>
                         {
                             Interlocked.Increment(ref stats.copiedCount);
