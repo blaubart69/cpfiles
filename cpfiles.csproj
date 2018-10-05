@@ -41,6 +41,7 @@
     <Compile Include="CommandlineOpts.cs" />
     <Compile Include="ConsoleAndFileWriter.cs" />
     <Compile Include="CopyFile.cs" />
+    <Compile Include="CopyFiles.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Options.cs" />

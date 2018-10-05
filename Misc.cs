@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Spi
@@ -108,6 +109,31 @@ namespace Spi
             else
             {
                 return TsvValues.Substring(LastTab + 1);
+            }
+        }
+        public static void ReadFilesAndSizes(string filename, out UInt64 numberFiles, out UInt64? totalFilesize)
+        {
+            numberFiles = 0;
+            totalFilesize = null;
+
+            foreach( string line in System.IO.File.ReadLines(filename))
+            {
+                ++numberFiles;
+
+                string[] cols = line.Split('\t');
+                if ( cols.Length > 1 )
+                {
+                    try
+                    {
+                        UInt64 filesize = Convert.ToUInt64(cols[cols.Length - 2]);
+                        if ( !totalFilesize.HasValue)
+                        {
+                            totalFilesize = 0;
+                        }
+                        totalFilesize += filesize;
+                    }
+                    catch { }
+                }
             }
         }
     }

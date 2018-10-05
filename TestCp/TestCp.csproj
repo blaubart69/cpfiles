@@ -51,6 +51,7 @@
     <Compile Include="TestMisc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestLastTsvCol.cs" />
+    <Compile Include="ReadInput.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

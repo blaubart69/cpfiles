@@ -10,8 +10,13 @@ namespace cp
 {
     struct Stats
     {
-        public Int64 copiedCount;
-        public Int64 errorsCount;
+        public long copiedCount;
+        public long errorsCount;
+
+        public long  copiedBytes;
+
+        public UInt64? totalBytes;
+        public UInt64  totalFiles;
     }
     class Program
     {
@@ -33,14 +38,19 @@ namespace cp
                 Stats stats = new Stats();
                 Task<bool> copyFileTask = null;
 
+                Task.Run(() => Misc.ReadFilesAndSizes(opts.FilenameWithFiles, out stats.totalFiles, out stats.totalBytes));
+
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
-                    copyFileTask = StartCopyFiles(FullSrcDir, FullTrgDir,
-                        files: File.ReadLines(opts.FilenameWithFiles)
-                                   .Select(line => Misc.GetLastTsvColumn(line)),
-                        OnCopy: (filename) =>
+                    copyFileTask = CopyFiles.Start(FullSrcDir, FullTrgDir,
+                        files: CopyFiles.ReadInputfile( File.ReadLines(opts.FilenameWithFiles) ),
+                        OnCopy: (string filename, UInt64? filesize) =>
                         {
                             Interlocked.Increment(ref stats.copiedCount);
+                            if ( filesize.HasValue )
+                            {
+                                Interlocked.Add(ref stats.copiedBytes, (long)filesize.Value);
+                            }
                         },
                         OnWin32Error: (LastErrorCode, Api, Message) =>
                         {
@@ -50,7 +60,7 @@ namespace cp
                         MaxThreads: opts.MaxThreads,
                         dryRun:     opts.dryrun);
 
-                    WaitUntilFinished(copyFileTask, 2000, () => Console.Error.WriteLine($"copied: {stats.copiedCount}, errors: {stats.errorsCount}") );
+                    WaitUntilFinished(copyFileTask, 2000, () => PrintStatsLine(stats) );
                 }
 
                 rc = copyFileTask.Result ? 8 : 0;
@@ -64,6 +74,18 @@ namespace cp
 
             return rc;
         }
+        static void PrintStatsLine(Stats stats)
+        {
+            string done = "n/a";
+            if ( stats.totalFiles > 0 )
+            {
+                float fDone = (float)stats.copiedCount / (float)stats.totalFiles * 100;
+                done = $"{fDone:0.##}";
+            }
+
+            Console.Error.WriteLine(
+                $"copied: {stats.copiedCount:N0}, errors: {stats.errorsCount:N0}, done: {done}, all: {stats.totalFiles:N0}");
+        }
         static void WaitUntilFinished(Task TaskToWaitFor, int milliseconds, Action ExecEvery)
         {
             while ( ! TaskToWaitFor.Wait(milliseconds) )
@@ -72,30 +94,6 @@ namespace cp
             }
             ExecEvery();
         }
-        static Task<bool> StartCopyFiles(
-            string FullSrc, string FullTrg, IEnumerable<string> files, 
-            Action<string> OnCopy, Native.Win32ApiErrorCallback OnWin32Error,
-            int MaxThreads,
-            bool dryRun)
-        {
-            return
-                Task.Run(() =>
-                {
-                    bool hasErrors = false;
-
-                    Parallel.ForEach(
-                        source: files,
-                        parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = MaxThreads },
-                        body: (relativeFilename) =>
-                        {
-                            if (!CopyFile.Run(relativeFilename, FullSrc, FullTrg, OnCopy, OnWin32Error, dryRun))
-                            {
-                                hasErrors = true;
-                            }
-                        });
-
-                    return hasErrors;
-                });
-        }
+        
     }
 }

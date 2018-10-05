@@ -6,7 +6,7 @@ namespace cp
 {
     class CopyFile
     {
-        public static bool Run(string relativeFilename, string srcDir, string trgDir, Action<string> OnCopy,
+        public static bool Run(string relativeFilename, UInt64? filesize, string srcDir, string trgDir, Action<string, UInt64?> OnCopy,
             Spi.Native.Win32ApiErrorCallback OnWin32Error, bool dryrun)
         {
             string FullSrc = Path.Combine(srcDir, relativeFilename);
@@ -21,7 +21,7 @@ namespace cp
             bool ok = DoCopyFile(FullSrc, FullTrg, OnWin32Error);
             if (ok)
             {
-                OnCopy?.Invoke(relativeFilename);
+                OnCopy?.Invoke(relativeFilename, filesize);
             }
 
             return ok;
