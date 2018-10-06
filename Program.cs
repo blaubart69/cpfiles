@@ -38,7 +38,12 @@ namespace cp
                 Stats stats = new Stats();
                 Task<bool> copyFileTask = null;
 
-                Task.Run(() => Misc.ReadFilesAndSizes(opts.FilenameWithFiles, out stats.totalFiles, out stats.totalBytes));
+                Task.Run(() =>
+                {
+                    CopyFiles.ReadFilesAndSizes(opts.FilenameWithFiles, out stats.totalFiles, out stats.totalBytes);
+                    //string strTotalBytes = stats.totalBytes.HasValue ? Misc.GetPrettyFilesize(stats.totalBytes.Value) : "n/a";
+                    //Console.Error.WriteLine($"found files/filesize\t{stats.totalFiles:N0}/{strTotalBytes}");
+                });
 
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
@@ -60,7 +65,12 @@ namespace cp
                         MaxThreads: opts.MaxThreads,
                         dryRun:     opts.dryrun);
 
-                    WaitUntilFinished(copyFileTask, 2000, () => PrintStatsLine(stats) );
+                    Spi.StatusLineWriter linewriter = new StatusLineWriter(Console.Error);
+                    DateTime LastTime = DateTime.MinValue;
+                    ulong LastCopiedBytes = 0;
+                    WaitUntilFinished(copyFileTask, 2000, 
+                        ExecEvery: () => linewriter.Write( GetStatsLine(stats, ref LastTime, ref LastCopiedBytes) ), 
+                        ExecAtEnd: () => Console.Error.WriteLine() );
                 }
 
                 rc = copyFileTask.Result ? 8 : 0;
@@ -74,26 +84,46 @@ namespace cp
 
             return rc;
         }
-        static void PrintStatsLine(Stats stats)
+        static string GetStatsLine(Stats stats, ref DateTime LastTime, ref ulong LastCopiedBytes)
         {
-            string done = "n/a";
-            if ( stats.totalFiles > 0 )
+            string bytes = "n/a";
+            if ( stats.totalBytes.HasValue )
             {
-                float fDone = (float)stats.copiedCount / (float)stats.totalFiles * 100;
-                done = $"{fDone:0.##}";
+                bytes = String.Format("copied/done/all - {0}/{1}%/{2}",
+                    Misc.GetPrettyFilesize((ulong)stats.copiedBytes),
+                    GetPercentString(stats.totalBytes.Value, (ulong)stats.copiedBytes),
+                    Misc.GetPrettyFilesize(stats.totalBytes.Value)
+                    );
             }
 
-            Console.Error.WriteLine(
-                $"copied: {stats.copiedCount:N0}, errors: {stats.errorsCount:N0}, done: {done}, all: {stats.totalFiles:N0}");
+            string donePercent = GetPercentString(stats.totalFiles, (ulong)stats.copiedCount); ;
+
+            return
+                $"files: copied/done/errors/all - {stats.copiedCount:N0}/{donePercent}%/{stats.errorsCount:N0}/{stats.totalFiles:N0} | bytes: {bytes}";
         }
-        static void WaitUntilFinished(Task TaskToWaitFor, int milliseconds, Action ExecEvery)
+        static void WaitUntilFinished(Task TaskToWaitFor, int milliseconds, Action ExecEvery, Action ExecAtEnd)
         {
             while ( ! TaskToWaitFor.Wait(milliseconds) )
             {
                 ExecEvery();
             }
             ExecEvery();
+            ExecAtEnd?.Invoke();
         }
-        
+        static string GetPercentString(ulong total, ulong done)
+        {
+            string result = "n/a";
+            if (total > 0)
+            {
+                float donePercent = (float)done / (float)total * 100;
+                result = $"{donePercent:0.##}";
+            }
+            else
+            {
+                result = "n/a";
+            }
+
+            return result;
+        }
     }
 }

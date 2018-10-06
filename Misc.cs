@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Spi
 {
@@ -111,30 +112,15 @@ namespace Spi
                 return TsvValues.Substring(LastTab + 1);
             }
         }
-        public static void ReadFilesAndSizes(string filename, out UInt64 numberFiles, out UInt64? totalFilesize)
+        public static string GetPrettyFilesize(long Filesize)
         {
-            numberFiles = 0;
-            totalFilesize = null;
-
-            foreach( string line in System.IO.File.ReadLines(filename))
-            {
-                ++numberFiles;
-
-                string[] cols = line.Split('\t');
-                if ( cols.Length > 1 )
-                {
-                    try
-                    {
-                        UInt64 filesize = Convert.ToUInt64(cols[cols.Length - 2]);
-                        if ( !totalFilesize.HasValue)
-                        {
-                            totalFilesize = 0;
-                        }
-                        totalFilesize += filesize;
-                    }
-                    catch { }
-                }
-            }
+            return GetPrettyFilesize((ulong)Filesize);
+        }
+        public static string GetPrettyFilesize(ulong Filesize)
+        {
+            StringBuilder sb = new StringBuilder(32);
+            Spi.Native.StrFormatByteSize((long)Filesize, sb, 32);
+            return sb.ToString();
         }
     }
 }

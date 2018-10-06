@@ -18,11 +18,11 @@ namespace cp
         static void ShowHelp(Mono.Options.OptionSet p)
         {
             Console.Error.WriteLine("Usage: cp [OPTIONS] {sourceBase} {targetBase} {filename}"
-            + "\ncopies files given by name in a textfile."
-            + "\nWhen the lines are Tab-separated the last column is used as filename."
-            + "\nThe filename is relative to {sourceBase} and {targetBase}");
-            Console.Error.WriteLine();
-            Console.Error.WriteLine("Options:");
+            + "\ncopies files given by name in a textfile relative to {sourceBase} and {targetBase}."
+            + "\n- when the lines are tab-separated the last column is used as filename."
+            + "\n- when the columen left next to the filename can by converted to a number, it is treated as the filesize to show the progress"
+            );
+            Console.Error.WriteLine("\nOptions:");
             p.WriteOptionDescriptions(Console.Error);
         }
         public static Opts GetOpts(string[] args)
@@ -58,6 +58,7 @@ namespace cp
             if (show_help)
             {
                 ShowHelp(p);
+                return null;
             }
             return resultOpts;
         }

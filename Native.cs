@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Spi
 {
@@ -103,5 +104,12 @@ namespace Spi
         public static extern bool CopyFileEx(string lpExistingFileName, string lpNewFileName,
             CopyProgressRoutine lpProgressRoutine, IntPtr lpData, ref Int32 pbCancel,
             CopyFileFlags       dwCopyFlags);
+
+        [DllImport("Shlwapi.dll", CharSet = CharSet.Unicode)]
+        [System.Security.SuppressUnmanagedCodeSecurity]
+        public static extern long StrFormatByteSize(
+                long fileSize
+                , [MarshalAs(UnmanagedType.LPTStr)] StringBuilder buffer
+                , int bufferSize);
     }
 }
