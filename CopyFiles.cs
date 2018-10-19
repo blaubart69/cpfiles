@@ -21,10 +21,14 @@ namespace cp
     {
         public static Task<bool> Start(
             string FullSrc, string FullTrg, IEnumerable<CopyItem> files,
-            Action<string,UInt64?> OnCopy, Spi.Native.Win32ApiErrorCallback OnWin32Error,
+            Action<string,UInt64?> OnCopy,
+            Action OnDirectoryCreated,
+            Spi.Native.Win32ApiErrorCallback OnWin32Error,
             int MaxThreads,
             bool dryRun)
         {
+            Console.Error.WriteLine($"starting with MaxDegreeOfParallelism of {MaxThreads}");
+
             return
                 Task.Run(() =>
                 {
@@ -35,7 +39,15 @@ namespace cp
                         parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = MaxThreads },
                         body: (itemToCopy) =>
                         {
-                            if (!CopyFile.Run(itemToCopy.relativeFilename, itemToCopy.filesize, FullSrc, FullTrg, OnCopy, OnWin32Error, dryRun))
+                            if (!CopyFile.Run(
+                                itemToCopy.relativeFilename
+                                , itemToCopy.filesize
+                                , FullSrc
+                                , FullTrg
+                                , OnCopy
+                                , OnDirectoryCreated
+                                , OnWin32Error
+                                , dryRun))
                             {
                                 hasErrors = true;
                             }

@@ -6,7 +6,8 @@ namespace cp
 {
     class CopyFile
     {
-        public static bool Run(string relativeFilename, UInt64? filesize, string srcDir, string trgDir, Action<string, UInt64?> OnCopy,
+        public static bool Run(string relativeFilename, UInt64? filesize, string srcDir, string trgDir, 
+            Action<string, UInt64?> OnCopy, Action OnCreateDirectory,
             Spi.Native.Win32ApiErrorCallback OnWin32Error, bool dryrun)
         {
             string FullSrc = Path.Combine(srcDir, relativeFilename);
@@ -18,7 +19,7 @@ namespace cp
                 return true;
             }
 
-            bool ok = DoCopyFile(FullSrc, FullTrg, OnWin32Error);
+            bool ok = DoCopyFile(FullSrc, FullTrg, OnWin32Error, OnCreateDirectory);
             if (ok)
             {
                 OnCopy?.Invoke(relativeFilename, filesize);
@@ -26,7 +27,8 @@ namespace cp
 
             return ok;
         }
-        public static bool DoCopyFile(string FullSrc, string FullTrg, Spi.Native.Win32ApiErrorCallback OnWin32Error)
+        public static bool DoCopyFile(string FullSrc, string FullTrg, 
+            Spi.Native.Win32ApiErrorCallback OnWin32Error, Action OnCreateDirectory)
         {
             if ( Spi.Native.CopyFile(lpExistingFileName: FullSrc, lpNewFileName: FullTrg, bFailIfExists: false) )
             {
@@ -39,7 +41,7 @@ namespace cp
             {
                 //string FullTargetDirectoryname = System.IO.Path.GetDirectoryName(FullTrg);
                 string FullTargetDirectoryname = Spi.Misc.GetDirectoryName(FullTrg);
-                if ( ! Spi.Misc.CreatePath(FullTargetDirectoryname, OnWin32Error))
+                if ( ! Spi.Misc.CreatePath(FullTargetDirectoryname, OnWin32Error, OnCreateDirectory))
                 {
                     OnWin32Error?.Invoke(Marshal.GetLastWin32Error(), "CreateDirectoryW", FullTargetDirectoryname);
                     return false;

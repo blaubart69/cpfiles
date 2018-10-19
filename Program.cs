@@ -12,6 +12,7 @@ namespace cp
     {
         public long copiedCount;
         public long errorsCount;
+        public long CreateDirectoryCalled;
 
         public long  copiedBytes;
 
@@ -35,21 +36,27 @@ namespace cp
                 string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
                 string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));
 
+                Console.Error.WriteLine(
+                    $"source base: {FullSrcDir}\n"
+                 +  $"target base: {FullTrgDir}");
+
                 Stats stats = new Stats();
                 Task<bool> copyFileTask = null;
 
                 Task.Run(() =>
                 {
                     CopyFiles.ReadFilesAndSizes(opts.FilenameWithFiles, out stats.totalFiles, out stats.totalBytes);
-                    if (stats.totalBytes.HasValue)
-                    {
-                        Console.Error.WriteLine("I: filesizes found");
-                    }
-                    else
-                    {
-                        Console.Error.WriteLine("I: no filesizes found in your inputfile. Cannot display Bytes-Progress.");
-                    }
+                    //if (stats.totalBytes.HasValue)
+                    //{
+                    //    Console.Error.WriteLine("I: filesizes found");
+                    //}
+                    //else
+                    //{
+                    //    Console.Error.WriteLine("I: no filesizes found in your inputfile. Cannot display Bytes-Progress.");
+                    //}
                 });
+
+                DateTime started = DateTime.Now;
 
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
@@ -68,6 +75,10 @@ namespace cp
                             errorWriter.WriteLine($"{LastErrorCode}\t{Api}\t{Message}");
                             Interlocked.Increment(ref stats.errorsCount);
                         },
+                        OnDirectoryCreated: () =>
+                        {
+                            Interlocked.Increment(ref stats.CreateDirectoryCalled);
+                        },
                         MaxThreads: opts.MaxThreads,
                         dryRun:     opts.dryrun);
 
@@ -77,6 +88,8 @@ namespace cp
                         ExecEvery: () => linewriter.Write( GetStatsLine(stats, StartTime) ), 
                         ExecAtEnd: () => Console.Error.WriteLine() );
                 }
+
+                WriteEndReport(started, stats);
 
                 rc = copyFileTask.Result ? 8 : 0;
             }
@@ -89,30 +102,53 @@ namespace cp
 
             return rc;
         }
+        private static void WriteEndReport(DateTime started, Stats stats)
+        {
+            DateTime ended = DateTime.Now;
+
+            Console.WriteLine(
+                  $"\nTime elapsed:   {Misc.NiceDuration(ended-started)}"
+                + $"\ncopied files:   {stats.copiedCount:N0} ({Misc.GetPrettyFilesize(stats.copiedBytes)})"
+                + $"\nerrors:         {stats.errorsCount:N0}"
+                + $"\nCreDirCalled:   {stats.CreateDirectoryCalled:N0}"
+                );
+        }
+
         static string GetStatsLine(Stats stats, DateTime StartingTime)
         {
             TimeSpan elapsed = DateTime.Now - StartingTime;
             string AvgSpeedPerSec = "n/a";
+            ulong ETAseconds = 0;
+            ulong AvgBytesPerSec = 0;
+
             if ( elapsed.Ticks > 0)
             {
-                ulong AvgBytesPerSec = Convert.ToUInt64((double)stats.copiedBytes / elapsed.TotalSeconds);
+                AvgBytesPerSec = Convert.ToUInt64((double)stats.copiedBytes / elapsed.TotalSeconds);
                 AvgSpeedPerSec = Misc.GetPrettyFilesize(AvgBytesPerSec);
             }
 
             string bytes = "n/a";
             if ( stats.totalBytes.HasValue )
             {
-                bytes = String.Format("copied/done/all - {0} / {1}% / {2}",
+                bytes = String.Format("copied/done/all - {0}/{1}%/{2}",
                     Misc.GetPrettyFilesize((ulong)stats.copiedBytes),
                     GetPercentString(stats.totalBytes.Value, (ulong)stats.copiedBytes),
                     Misc.GetPrettyFilesize(stats.totalBytes.Value)
                     );
+
+                if (AvgBytesPerSec > 0)
+                {
+                    ETAseconds = stats.totalBytes.Value / AvgBytesPerSec;
+                }
             }
 
-            string donePercent = GetPercentString(stats.totalFiles, (ulong)stats.copiedCount); ;
+            string donePercent = GetPercentString(stats.totalFiles, (ulong)stats.copiedCount);
+
+            string ETA = ETAseconds == 0 ? "n/a" : Misc.NiceDuration(TimeSpan.FromSeconds((double)ETAseconds)); 
 
             return
-                $"files: copied/done/all/errors - {stats.copiedCount:N0} / {donePercent}% / {stats.totalFiles:N0} / {stats.errorsCount:N0} | bytes: {bytes} | avg speed/s: {AvgSpeedPerSec}";
+                $"files: copied/done/all/errors/CreDirCalled - {stats.copiedCount:N0}/{donePercent}%/{stats.totalFiles:N0}/{stats.errorsCount:N0}/{stats.CreateDirectoryCalled:N0}"
+              + $" | bytes: {bytes} | avg speed/s: {AvgSpeedPerSec} | ETA: {ETA} | elapsed: {Misc.NiceDuration(elapsed)}";
         }
         static void WaitUntilFinished(Task TaskToWaitFor, int milliseconds, Action ExecEvery, Action ExecAtEnd)
         {
