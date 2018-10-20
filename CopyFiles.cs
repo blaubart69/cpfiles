@@ -34,26 +34,31 @@ namespace cp
                 Task.Run(() =>
                 {
                     bool hasErrors = false;
-
-                    Parallel.ForEach(
-                        source: files,
-                        parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = MaxThreads },
-                        body: (itemToCopy) =>
-                        {
-                            if (!CopyFile.Run(
-                                itemToCopy.relativeFilename
-                                , itemToCopy.filesize
-                                , FullSrc
-                                , FullTrg
-                                , OnCopy
-                                , OnDirectoryCreated
-                                , OnWin32Error
-                                , dryRun))
+                    try
+                    {
+                        var result = Parallel.ForEach(
+                            source: files,
+                            parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = MaxThreads },
+                            body: (itemToCopy) =>
                             {
-                                hasErrors = true;
-                            }
-                        });
-
+                                if (!CopyFile.Run(
+                                    itemToCopy.relativeFilename
+                                    , itemToCopy.filesize
+                                    , FullSrc
+                                    , FullTrg
+                                    , OnCopy
+                                    , OnDirectoryCreated
+                                    , OnWin32Error
+                                    , dryRun))
+                                {
+                                    hasErrors = true;
+                                }
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Parallel.ForEach()\n{ex}");
+                    }
                     return hasErrors;
                 });
         }
