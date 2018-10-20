@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,7 +28,7 @@ namespace cp
             int MaxThreads,
             bool dryRun)
         {
-            Console.Error.WriteLine($"starting with MaxDegreeOfParallelism of {MaxThreads}");
+            Console.Error.WriteLine($"I: starting Parallel.ForEach() with MaxDegreeOfParallelism of {MaxThreads}");
 
             return
                 Task.Run(() =>
@@ -83,7 +84,7 @@ namespace cp
             numberFiles = 0;
             totalFilesize = null;
 
-            foreach (CopyItem ci in CopyFiles.ReadInputfile(System.IO.File.ReadLines(filename)))
+            foreach (CopyItem ci in CopyFiles.ReadInputfile(CopyFiles.ReadLines(filename)))
             {
                 ++numberFiles;
 
@@ -95,6 +96,22 @@ namespace cp
                     }
                     totalFilesize += ci.filesize.Value;
                 }
+            }
+        }
+        public static IEnumerable<string> ReadLines(TextReader reader)
+        {
+            string line;
+
+            while ( (line=reader.ReadLine()) != null )
+            {
+                yield return line;
+            }
+        }
+        public static IEnumerable<string> ReadLines(string filename)
+        {
+            using (StreamReader reader = new StreamReader(new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)))
+            {
+                return CopyFiles.ReadLines(reader);
             }
         }
     }

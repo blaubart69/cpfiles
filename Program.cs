@@ -33,6 +33,9 @@ namespace cp
                     return 1;
                 }
 
+                Console.Error.WriteLine($"I: setting ThreadPool.SetMaxThreads() to {opts.MaxThreads}");
+                ThreadPool.SetMaxThreads(opts.MaxThreads, opts.MaxThreads);
+
                 string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
                 string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));
 
@@ -43,25 +46,13 @@ namespace cp
                 Stats stats = new Stats();
                 Task<bool> copyFileTask = null;
 
-                Task.Run(() =>
-                {
-                    CopyFiles.ReadFilesAndSizes(opts.FilenameWithFiles, out stats.totalFiles, out stats.totalBytes);
-                    //if (stats.totalBytes.HasValue)
-                    //{
-                    //    Console.Error.WriteLine("I: filesizes found");
-                    //}
-                    //else
-                    //{
-                    //    Console.Error.WriteLine("I: no filesizes found in your inputfile. Cannot display Bytes-Progress.");
-                    //}
-                });
+                Task.Run(() => CopyFiles.ReadFilesAndSizes(opts.FilenameWithFiles, out stats.totalFiles, out stats.totalBytes)).ConfigureAwait(false);
 
                 DateTime started = DateTime.Now;
-
                 using (TextWriter errorWriter = TextWriter.Synchronized(new StreamWriter(@".\cpError.txt",  append: false, encoding: System.Text.Encoding.UTF8)))
                 {
                     copyFileTask = CopyFiles.Start(FullSrcDir, FullTrgDir,
-                        files: CopyFiles.ReadInputfile( File.ReadLines(opts.FilenameWithFiles) ),
+                        files: CopyFiles.ReadInputfile( CopyFiles.ReadLines(opts.FilenameWithFiles) ),
                         OnCopy: (string filename, UInt64? filesize) =>
                         {
                             Interlocked.Increment(ref stats.copiedCount);
@@ -138,7 +129,8 @@ namespace cp
 
                 if (AvgBytesPerSec > 0)
                 {
-                    ETAseconds = stats.totalBytes.Value / AvgBytesPerSec;
+                    ulong remainigBytesToCopy = stats.totalBytes.Value - (ulong)stats.copiedBytes;
+                    ETAseconds = remainigBytesToCopy / AvgBytesPerSec;
                 }
             }
 
