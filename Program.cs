@@ -33,8 +33,8 @@ namespace cp
                     return 1;
                 }
 
-                Console.Error.WriteLine($"I: setting ThreadPool.SetMaxThreads() to {opts.MaxThreads}");
-                ThreadPool.SetMaxThreads(opts.MaxThreads, opts.MaxThreads);
+                Console.Error.WriteLine($"I: setting ThreadPool.SetMinThreads() to {opts.MaxThreads}");
+                ThreadPool.SetMinThreads(opts.MaxThreads, opts.MaxThreads);
 
                 string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
                 string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));

@@ -116,7 +116,10 @@ namespace cp
         {
             using (StreamReader reader = new StreamReader(new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan)))
             {
-                return CopyFiles.ReadLines(reader);
+                foreach (string line in CopyFiles.ReadLines(reader))
+                {
+                    yield return line;
+                }
             }
         }
     }
