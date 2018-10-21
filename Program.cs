@@ -33,11 +33,36 @@ namespace cp
                     return 1;
                 }
 
+                string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
+                string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));
+
+                int checkArgs = 0;
+                if (!File.Exists(opts.FilenameWithFiles))
+                {
+                    Console.Error.WriteLine($"input file does not exists. [{opts.FilenameWithFiles}]");
+                    checkArgs = 2;
+                }
+
+                if ( !Misc.IsDirectory(FullSrcDir) )
+                {
+                    Console.Error.WriteLine($"source base is not a directory. [{FullSrcDir}]");
+                    checkArgs += 2;
+                }
+
+                if (!Misc.IsDirectory(FullTrgDir))
+                {
+                    Console.Error.WriteLine($"target base is not a directory. [{FullTrgDir}]");
+                    checkArgs += 2;
+                }
+
+                if (checkArgs > 0)
+                {
+                    return checkArgs;
+                }
+
                 Console.Error.WriteLine($"I: setting ThreadPool.SetMinThreads() to {opts.MaxThreads}");
                 ThreadPool.SetMinThreads(opts.MaxThreads, opts.MaxThreads);
 
-                string FullSrcDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.SrcBase));
-                string FullTrgDir = Misc.GetLongFilenameNotation(Path.GetFullPath(opts.TrgBase));
 
                 Console.Error.WriteLine(
                     $"source base: {FullSrcDir}\n"
