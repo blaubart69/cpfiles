@@ -97,9 +97,11 @@ namespace cp
         {
             DateTime ended = DateTime.Now;
 
+            string copiedBytes = stats.totalBytes.HasValue ? Misc.GetPrettyFilesize(stats.copiedBytes) : "n/a";
+
             Console.WriteLine(
                   $"\nTime elapsed:   {Misc.NiceDuration(ended-started)}"
-                + $"\ncopied files:   {stats.copiedCount:N0} ({Misc.GetPrettyFilesize(stats.copiedBytes)})"
+                + $"\ncopied files:   {stats.copiedCount:N0} ({copiedBytes})"
                 + $"\nerrors:         {stats.errorsCount:N0}"
                 + $"\nCreDirCalled:   {stats.CreateDirectoryCalled:N0}"
                 );
