@@ -166,8 +166,8 @@ namespace cp
             string ETA = ETAseconds == 0 ? "n/a" : Misc.NiceDuration(TimeSpan.FromSeconds((double)ETAseconds)); 
 
             return
-                $"files: copied/done/all/errors/CreDirCalled - {stats.copiedCount:N0}/{donePercent}%/{stats.totalFiles:N0}/{stats.errorsCount:N0}/{stats.CreateDirectoryCalled:N0}"
-              + $" | bytes: {bytes} | avg speed/s: {AvgSpeedPerSec} | ETA: {ETA} | elapsed: {Misc.NiceDuration(elapsed)}";
+                $"copied/done/all/err/CreDir - {stats.copiedCount:N0}/{donePercent}%/{stats.totalFiles:N0}/{stats.errorsCount:N0}/{stats.CreateDirectoryCalled:N0}"
+              + $" | bytes: {bytes} | avg/s: {AvgSpeedPerSec} | ETA: {ETA} | elapsed: {Misc.NiceDuration(elapsed)}";
         }
         static void WaitUntilFinished(Task TaskToWaitFor, int milliseconds, Action ExecEvery, Action ExecAtEnd)
         {

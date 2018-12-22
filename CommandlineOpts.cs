@@ -11,7 +11,7 @@ namespace cp
         public string SrcBase;
         public string TrgBase;
         public bool   dryrun;
-        public int    MaxThreads = 8;
+        public int    MaxThreads = 16;
     }
     class CommandlineOpts
     {
